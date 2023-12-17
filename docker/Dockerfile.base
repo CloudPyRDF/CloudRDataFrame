@@ -1,0 +1,16 @@
+ARG version=6.26.06-ubuntu22.04
+FROM rootproject/root:${version}
+
+RUN apt-get update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --no-install-suggests -y \
+        python3-numpy \
+        python3-cloudpickle \
+        python3-pip \
+        git \
+        krb5-user\
+    && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN git clone https://github.com/CloudPyRDF/root.git --progress --single-branch --branch distrdf-aws-vpadulan root_src && \
+    cp -r root_src/bindings/experimental/distrdf/python/DistRDF/Backends/AWS root/lib/DistRDF/Backends/AWS && \
+    rm -rf root_src

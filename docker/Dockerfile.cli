@@ -1,0 +1,11 @@
+FROM root_base:latest
+
+ENV roothome=/opt/root/
+
+RUN apt-get update -y && \
+    apt-get install --no-install-recommends --no-install-suggests -y \
+        jupyter \
+    && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m pip install jupyterlab --no-cache-dir
