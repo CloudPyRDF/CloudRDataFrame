@@ -2,13 +2,7 @@ import logging
 
 
 class FlushingLogger:
-    FLUSHED_METHODS = [
-        'info',               
-        'warning',
-        'debug',
-        'error',
-        'critical'
-    ]
+    FLUSHED_METHODS = ["info", "warning", "debug", "error", "critical"]
 
     def __init__(self):
         self.logger = logging.getLogger()
@@ -25,4 +19,3 @@ class FlushingLogger:
                 h.flush()
 
         return flushed_method
-

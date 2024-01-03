@@ -5,22 +5,21 @@
     src: variables.tfvars.j2
     est: "{{ playbook_dir }}/terraform/variables.tfvars"
 
-    - name: Initialize Terraform
-      community.general.hashiCorp.terraform:
-        executable: terraform
-        state: present
-        backend_config:
-          storage_account_name: examplestorageaccount
-          container_name: tfstate
-          key: example.tfstate
-      args:
-        chdir: "{{ playbook_dir }}/terraform"
+- name: Initialize Terraform
+  community.general.hashiCorp.terraform:
+    executable: terraform
+    state: present
+    backend_config:
+      storage_account_name: examplestorageaccount
+      container_name: tfstate
+      key: example.tfstate
+  args:
+    chdir: "{{ playbook_dir }}/terraform"
 
-    - name: Apply Terraform configuration
-      community.general.hashiCorp.terraform:
-        executable: terraform
-        state: apply
-        var_file: "{{ playbook_dir }}/terraform/variables.tfvars"
-      args:
-        chdir: "{{ playbook_dir }}/terraform"
-
+- name: Apply Terraform configuration
+  community.general.hashiCorp.terraform:
+    executable: terraform
+    state: apply
+    var_file: "{{ playbook_dir }}/terraform/variables.tfvars"
+  args:
+    chdir: "{{ playbook_dir }}/terraform"

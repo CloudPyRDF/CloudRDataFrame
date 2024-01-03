@@ -11,4 +11,3 @@
 - name: Show repository_root
   debug:
     msg: "{{ repository_root }}"
-

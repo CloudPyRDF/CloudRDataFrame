@@ -6,6 +6,3 @@ dockerfiles:
     path: .
     dockerfile_path: Dockerfile.base
     base_image: rootproject/root:6.26.06-ubuntu22.04
-
-
-  

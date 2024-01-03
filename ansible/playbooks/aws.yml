@@ -71,9 +71,6 @@
         path: "{{ item.infiles }}"
         dest: "{{ item.outfile}}"
         format: zip
-#        options: "-r -j"
-#      command: "zip -r -j {{ item.outfile }} {{ item.infiles }}"
-      with_items:      
+      with_items:
         - infiles: "{{ repository_root }}/functions/aws/kickoff/*"
           outfile: "{{ terraform_generated_dir }}/kickoff.zip"
-

@@ -6,7 +6,6 @@ from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
 
 import ROOT
-
 from DistRDF import DataFrame, HeadNode
 from DistRDF.Backends import Base
 
