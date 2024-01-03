@@ -1,0 +1,11 @@
+
+docker_build_nocache: false
+
+dockerfiles:
+  - name: root_base
+    path: .
+    dockerfile_path: Dockerfile.base
+    base_image: rootproject/root:6.26.06-ubuntu22.04
+
+
+  

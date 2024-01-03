@@ -8,7 +8,7 @@ import cloudpickle as pickle
 import ROOT
 from monitor import CPUAndNetMonitor, EmptyMonitor, monitoring_thread
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 bucket = os.getenv("bucket")
 debug_command = os.getenv("debug_command", "")
 return_after_debug = os.getenv("return_after_debug", "False")
@@ -23,7 +23,7 @@ def lambda_handler(event, context):
     if debug_info is not None:
         return debug_info
 
-    logging.info(f"event {event}")
+    print(f"event {event}", flush=True)
 
     rdf_range = pickle.loads(base64.b64decode(event["range"]))
     mapper = pickle.loads(base64.b64decode(event["script"]))

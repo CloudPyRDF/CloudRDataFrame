@@ -1,11 +1,17 @@
-FROM root_base:latest
+ARG base_image
+FROM ${base_image}
 
 ENV roothome=/opt/root/
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y && \
     apt-get install --no-install-recommends --no-install-suggests -y \
+        python3-boto3 \
         jupyter \
     && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install jupyterlab --no-cache-dir
+RUN python3 -m pip install \
+        jupyterlab \
+        tqdm \
+    --no-cache-dir

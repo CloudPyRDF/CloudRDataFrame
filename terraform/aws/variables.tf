@@ -7,7 +7,7 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
-variable "root_lambda_name" {
+variable "lambda_name" {
   default = "root_lambda"
 }
 
@@ -30,4 +30,8 @@ variable "root_docker_image_repository_url" {
 
 variable "lambda_role_arn" {
   default = ""
+}
+
+variable "root_image_prefix" {
+
 }

@@ -1,3 +1,5 @@
-FROM root_aws_lambda:latest
+ARG base_image=root_aws_lambda:latest
+FROM ${base_image}
 
-COPY --chmod=777 lambda.py
+COPY lambda.py lambda.py
+RUN chmod 777 lambda.py

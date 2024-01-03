@@ -1,0 +1,15 @@
+---
+
+- name: Build Docker images
+  community.docker.docker_image:
+    name: "{{ images_name_prefix }}_{{ item.name }}"
+    tag: "{{ item.tag | default('latest') }}"
+    build:
+      path: "{{ repository_root }}/{{ item.path }}"
+      dockerfile: "{{ repository_root }}/{{ item.dockerfile_path }}"
+      args:
+        base_image: "{{ item.base_image }}"
+      nocache: "{{ docker_build_nocache }}"
+    force_source: true
+    source: build
+  with_items: "{{ dockerfiles }}"

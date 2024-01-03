@@ -21,9 +21,9 @@ class AWSServiceWrapper:
     def __init__(self, region):
         self.region = region
 
-    def invoke_worker_lambda(
+    def invoke_kickoff_lambda(
         self,
-        root_range,
+        ranges,
         script,
         certs,
         headers,
@@ -31,18 +31,6 @@ class AWSServiceWrapper:
         file_count,
         logger=logging.getLogger(),
     ) -> Optional[str]:
-        """
-        Invoke root lambda.
-        Args:
-            root_range (Range): Range of data.
-            script (function): A function that performs an operation on
-                a range of data.
-            logger (logging.Logger):
-        Returns:
-            Optional[str]: Name of file created by lambda or None if procedure
-                has failed.
-        """
-
         config = botocore.config.Config(
             retries={"total_max_attempts": 1}, read_timeout=900, connect_timeout=900
         )
@@ -50,7 +38,7 @@ class AWSServiceWrapper:
 
         payload = json.dumps(
             {
-                "range": self.encode_object(root_range),
+                "ranges": json.dumps(ranges),
                 "script": script,
                 "cert": base64.b64encode(certs).decode(),
                 "headers": headers,
@@ -61,11 +49,9 @@ class AWSServiceWrapper:
             }
         )
 
-        # filename: Optional[str] = None
-
         try:
             response = client.invoke(
-                FunctionName="worker_root_lambda",
+                FunctionName="kickoff_root_lambda",
                 InvocationType="RequestResponse",
                 Payload=bytes(payload, encoding="utf8"),
             )
@@ -74,7 +60,6 @@ class AWSServiceWrapper:
             if "FunctionError" in response or payload.get("statusCode") == 500:
                 exception, msg = self.process_lambda_error(payload)
                 raise exception(msg)
-
         except Exception as e:
             logger.error(e)
 
@@ -104,42 +89,8 @@ class AWSServiceWrapper:
             if "FunctionError" in response:
                 raise Exception(payload)
         except Exception as e:
+            print(f"error error {e}")
             logger.error(e)
-
-    def invoke_reduce_lambda(
-        self, reducer, file_count, prefix, logger=logging.getLogger()
-    ) -> Optional[str]:
-        config = botocore.config.Config(
-            retries={"total_max_attempts": 1}, read_timeout=900, connect_timeout=900
-        )
-        client = boto3.client("lambda", region_name=self.region, config=config)
-
-        payload = json.dumps(
-            {
-                "reducer": reducer,
-                "filesno": file_count,
-                "prefix": prefix,
-            }
-        )
-
-        try:
-            response = client.invoke(
-                FunctionName="reducer_root_lambda",
-                InvocationType="RequestResponse",
-                Payload=bytes(payload, encoding="utf8"),
-            )
-            payload = self.get_response_payload(response)
-
-            if "FunctionError" in response or payload.get("statusCode") == 500:
-                exception, msg = self.process_lambda_error(payload)
-                raise exception(msg)
-
-            filename = json.loads(payload.get("filename", "null"))
-
-        except Exception as e:
-            logger.error(e)
-
-        return filename
 
     @staticmethod
     def get_response_payload(response):
@@ -171,6 +122,7 @@ class AWSServiceWrapper:
 
     def get_file_content_from_s3(self, filename, bucket_name):
         s3_client = boto3.client("s3")
+        # s3_client = boto3.session.Session().client('s3')
         response = s3_client.get_object(Bucket=bucket_name, Key=filename)
         return response["Body"].read()
 

@@ -1,0 +1,79 @@
+---
+- name: Setup Distributed RDataFrame infrastructure on AWS cloud
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+    - playbook_vars/aws.yml
+
+  vars:
+    repository_root: "{{ playbook_dir }}"
+
+  tasks:
+    - name: Perform setup before main tasks
+      include_role:
+        name: setup
+
+    - name: Update variables
+      set_fact:
+        terraform_generated_dir: "{{repository_root}}/terraform/aws/generated"
+
+    - name: Build base image
+      include_role:
+        name: docker
+      vars:
+        dockerfiles:
+          - name: root_base
+            path: Backends/
+            dockerfile_path: docker/Dockerfile.base
+            base_image: rootproject/root:6.26.06-ubuntu22.04
+
+    - name: Build aws image and cli
+      include_role:
+        name: docker
+      vars:
+        dockerfiles:
+          - name: root_awsbase
+            path: docker/
+            dockerfile_path: docker/Dockerfile.awslambda
+            base_image: "{{ images_name_prefix }}_root_base:latest"
+          - name: root_cli
+            path: docker/
+            dockerfile_path: docker/Dockerfile.cli
+            base_image: "{{ images_name_prefix }}_root_base:latest"
+
+    - name: Build lambda images
+      include_role:
+        name: docker
+      vars:
+        dockerfiles:
+          - name: root_reducer
+            path: functions/aws/reducer
+            dockerfile_path: functions/aws/reducer/Dockerfile
+            base_image: "{{ images_name_prefix }}_root_awsbase:latest"
+          - name: root_worker
+            path: functions/aws/worker
+            dockerfile_path: functions/aws/worker/Dockerfile
+            base_image: "{{ images_name_prefix }}_root_awsbase:latest"
+          - name: root_replicator
+            path: functions/aws/replicator
+            dockerfile_path: functions/aws/replicator/Dockerfile
+            base_image: "{{ images_name_prefix }}_root_awsbase:latest"
+
+    - name: Ensure the directory for generated lambda zip files exists
+      file:
+        path: "{{ terraform_generated_dir }}"
+        state: directory
+        mode: 0755
+
+    - name: Build lambdas zip files for terraform
+      archive:
+        path: "{{ item.infiles }}"
+        dest: "{{ item.outfile}}"
+        format: zip
+#        options: "-r -j"
+#      command: "zip -r -j {{ item.outfile }} {{ item.infiles }}"
+      with_items:      
+        - infiles: "{{ repository_root }}/functions/aws/kickoff/*"
+          outfile: "{{ terraform_generated_dir }}/kickoff.zip"
+

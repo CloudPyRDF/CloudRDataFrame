@@ -15,7 +15,10 @@ from .flushing_logger import FlushingLogger
 from .krbcert import KRBCert
 from .replicator import Replicator
 
-AWSBENCH = namedtuple("AWSBENCH", ["npartitions", "mapwalltime", "reducewalltime"])
+AWSBENCH = namedtuple(
+    "AWSBENCH",
+    ["npartitions", "mapwalltime", "reducewalltime", "invoketime", "downloadtime"],
+)
 
 
 class AWS(Base.BaseBackend):
@@ -101,34 +104,45 @@ class AWS(Base.BaseBackend):
         """
 
         prefix = str(uuid.uuid1())
+
         lambdas_count = len(ranges)
 
-        invoke_worker = self.create_init_arguments(mapper, lambdas_count, prefix)
+        invoker = self.create_init_arguments(mapper, lambdas_count, prefix)
         self.aws.serialize_and_upload_to_s3(
             self.processing_bucket, reducer, f"output/{prefix}/reducer"
         )
         self.logger.info(f"Before lambdas invoke. Number of lambdas: {lambdas_count}")
 
+        serialized_ranges = [self.aws.encode_object(r) for r in ranges]
+
+        import math
+
+        sqrn = int(math.sqrt(lambdas_count))
+        chunked_ranges = Replicator.partition(serialized_ranges, sqrn)
+
         invoke_begin = time.time()
 
-        self.work(invoke_worker, ranges)
+        self.work(invoker, chunked_ranges)
+        invoke_end = time.time()
 
-        self.logger.info("Lambdas finished.")
+        self.logger.info("Invocation finished.")
 
-        reduce_begin = time.time()
-
+        # self.wait_for_first_results(prefix)
         filename = f"output/{prefix}/final"
         self.aws.s3_wait_for_file(self.processing_bucket, filename)
 
-        # download_begin = time.time()
+        reduce_begin = time.time()
+        download_begin = time.time()
         result = self.download(filename)
-        # download_time = time.time() - download_begin
+        download_end = time.time()
         reduce_end = time.time()
 
         bench = AWSBENCH(
             len(ranges),
             round(reduce_begin - invoke_begin, 4),
             round(reduce_end - reduce_begin, 4),
+            round(invoke_end - invoke_begin, 4),
+            round(download_end - download_begin, 4),
         )
 
         # Clean up intermediate objects after we're done
@@ -148,8 +162,8 @@ class AWS(Base.BaseBackend):
         encoded_prefix = AWSServiceWrapper.encode_object(prefix)
         encoded_lambdas_count = AWSServiceWrapper.encode_object(lambdas_count)
 
-        invoke_worker = functools.partial(
-            self.aws.invoke_worker_lambda,
+        invoker = functools.partial(
+            self.aws.invoke_kickoff_lambda,
             script=encoded_mapper,
             certs=self.cert.bytes,
             headers=encoded_headers,
@@ -158,13 +172,13 @@ class AWS(Base.BaseBackend):
             logger=self.logger,
         )
 
-        return invoke_worker
+        return invoker
 
-    def work(self, invoke_worker, ranges):
-        with ThreadPoolExecutor(max_workers=len(ranges)) as executor:
+    def work(self, invoke_worker, chunked_ranges):
+        with ThreadPoolExecutor(max_workers=len(chunked_ranges)) as executor:
             futures = []
-            for root_range in ranges:
-                future = executor.submit(invoke_worker, root_range=root_range)
+            for ranges in chunked_ranges:
+                future = executor.submit(invoke_worker, ranges=ranges)
                 futures.append(future)
             return self.wait_on_futures(futures)
 

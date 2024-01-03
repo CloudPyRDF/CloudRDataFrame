@@ -1,3 +1,4 @@
+
 class Singleton(type):
     _instances = {}
 
@@ -9,7 +10,7 @@ class Singleton(type):
 
 
 class KRBCert(metaclass=Singleton):
-    TOKEN_PATH = "/tmp/certs"
+    TOKEN_PATH = '/tmp/certs'
 
     def __init__(self):
         self._bytes: bytes = None
@@ -25,9 +26,6 @@ class KRBCert(metaclass=Singleton):
             with open(self.TOKEN_PATH, "rb") as f:
                 self._bytes = f.read()
         except FileNotFoundError:
-            print(
-                "No certificate was found. Make sure to write the appropriate"
-                f" certificate in the path '{self.TOKEN_PATH}'. Disregard this"
-                " message if you are not reading restricted-access data."
-            )
-            self._bytes = b""
+            print("No certificate was found. Make sure to write the appropriate certificate in the path "
+                  f"'{self.TOKEN_PATH}'. Disregard this message if you are not reading restricted-access data.")
+            self._bytes = b''

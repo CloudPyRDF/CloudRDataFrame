@@ -26,3 +26,5 @@ variable "root_image_uri" {}
 variable "aws_region" {}
 
 variable "processing_bucket" {}
+
+variable "root_image_prefix" {}

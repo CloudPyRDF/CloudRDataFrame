@@ -1,0 +1,14 @@
+---
+
+- name: Get the absolute path using readlink -f
+  command: "readlink -f {{ role_path }}/../../../"
+  register: readlink_result
+
+- name: Set a variable with the absolute path
+  set_fact:
+    repository_root: "{{ readlink_result.stdout }}"
+
+- name: Show repository_root
+  debug:
+    msg: "{{ repository_root }}"
+

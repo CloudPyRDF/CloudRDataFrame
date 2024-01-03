@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class Reducer:
+
     @staticmethod
     def tree_reduce(reducer, iterable, chunk_size=2, min_size=4):
         """
@@ -43,20 +44,17 @@ class Reducer:
         if chunk_size <= 0:
             return []
 
-        return [
-            tuple(iterable[i : i + chunk_size])
-            for i in range(0, len(iterable), chunk_size)
-        ]
-
+        return [tuple(iterable[i:i+chunk_size])
+                for i in range(0, len(iterable), chunk_size)]
+    
     @staticmethod
     def parallel_reduce(chunks, reducer):
         with ThreadPoolExecutor(len(chunks)) as executor:
-            futures = [
-                executor.submit(Reducer.reduce, reducer, chunk) for chunk in chunks
-            ]
+            futures = [executor.submit(Reducer.reduce, reducer, chunk)
+                       for chunk in chunks]
             results = [future.result() for future in futures]
         return results
-
+    
     @staticmethod
     def reduce(reducer, iterable):
         if not iterable:

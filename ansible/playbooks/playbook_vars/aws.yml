@@ -1,0 +1,7 @@
+---
+
+# Set to 'true' to trigger the rebuilding of each Docker image.
+docker_build_nocache: false
+
+# Specify a non-empty prefix for the names of all Docker images built.
+images_name_prefix: aws
